@@ -19,8 +19,8 @@ Reusable GitHub Actions workflows that each project repo can call with:
 Tag releases and pin callers to tags (not `main`):
 
 ```bash
-git tag v2
-git push origin v2
+git tag v2.1
+git push origin v2.1
 ```
 
 ## v2 Notes
