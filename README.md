@@ -1,38 +1,51 @@
-# CI Standards Template Repo
+# CI Standards
 
-Use this folder as the source for a dedicated GitHub repository, for example:
+Reusable GitHub Actions workflows that each project repo can call with:
 
-- `eyuel23/ci-standards`
+- `uses: eyuel23/ci-standards/.github/workflows/<workflow>.yml@<tag>`
 
-This repo hosts reusable workflows. Each project repo then keeps tiny caller workflows that reference a tagged version (for example `@v1`).
-
-## Structure
+## Workflows
 
 ```text
-ci-standards/
-  .github/workflows/
-    node-baseline.yml
-    dependency-review.yml
-    codeql-js-ts.yml
-    secret-scan.yml
+.github/workflows/
+  node-baseline.yml
+  dependency-review.yml
+  codeql-js-ts.yml
+  secret-scan.yml
 ```
 
-## Publish Process
+## Versioning
 
-1. Create repo `ci-standards`.
-2. Copy this folder's contents into that repo root.
-3. Commit and push.
-4. Create a version tag:
+Tag releases and pin callers to tags (not `main`):
 
 ```bash
-git tag v1
-git push origin v1
+git tag v2
+git push origin v2
 ```
 
-5. Project repos should reference `@v1` in `uses:`.
+## v2 Notes
 
-## Update Process
+1. `dependency-review.yml` is private-repo-safe by default:
+   - private repos skip dependency review unless `run_on_private: true` is set.
+2. `secret-scan.yml` uses direct `gitleaks` CLI scanning, which is PR-safe in private repos.
+3. Check names remain stable:
+   - `baseline / quality`
+   - `dependency-review / dependency-review`
+   - `secret-scan / gitleaks`
+   - `codeql / analyze`
 
-1. Make workflow changes in `ci-standards`.
-2. Tag a new version (`v1.1`, `v2`, etc).
-3. Bump caller references in each project repo when ready.
+## Using Dependency Review In Private Repos
+
+By default, private repos do:
+
+- skip dependency review (green status with explicit skip log)
+
+If your private repo supports dependency review and you want it enforced:
+
+```yaml
+jobs:
+  dependency-review:
+    uses: eyuel23/ci-standards/.github/workflows/dependency-review.yml@v2
+    with:
+      run_on_private: true
+```

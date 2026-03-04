@@ -2,6 +2,12 @@ name: Reusable Dependency Review
 
 on:
   workflow_call:
+    inputs:
+      run_on_private:
+        description: Run dependency review on private repositories.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -14,5 +20,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Decide whether to run dependency review
+        id: gate
+        run: |
+          if [[ "${{ github.event.repository.private }}" == "true" && "${{ inputs.run_on_private }}" != "true" ]]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip notice (private repository default)
+        if: ${{ steps.gate.outputs.run == 'false' }}
+        run: echo "Skipping dependency review for private repository (run_on_private=false)."
+
       - name: Dependency review
+        if: ${{ steps.gate.outputs.run == 'true' }}
         uses: actions/dependency-review-action@v4
