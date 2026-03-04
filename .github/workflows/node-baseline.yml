@@ -1,0 +1,95 @@
+name: Reusable Node Baseline
+
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        description: Node.js version for CI.
+        required: false
+        type: string
+        default: "20"
+      working_directory:
+        description: Directory containing package.json.
+        required: false
+        type: string
+        default: "."
+      run_lint:
+        description: Run lint step.
+        required: false
+        type: boolean
+        default: true
+      lint_command:
+        description: Lint command.
+        required: false
+        type: string
+        default: "npm run lint"
+      run_typecheck:
+        description: Run typecheck step.
+        required: false
+        type: boolean
+        default: true
+      typecheck_command:
+        description: Typecheck command.
+        required: false
+        type: string
+        default: "npx tsc --noEmit"
+      run_build:
+        description: Run build step.
+        required: false
+        type: boolean
+        default: true
+      build_command:
+        description: Build command.
+        required: false
+        type: string
+        default: "npm run build"
+      run_migrations_check:
+        description: Run DB migration validation step.
+        required: false
+        type: boolean
+        default: false
+      migrations_check_command:
+        description: Migration validation command.
+        required: false
+        type: string
+        default: "npm run migrations:check"
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.working_directory }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        if: ${{ inputs.run_lint }}
+        run: ${{ inputs.lint_command }}
+
+      - name: Typecheck
+        if: ${{ inputs.run_typecheck }}
+        run: ${{ inputs.typecheck_command }}
+
+      - name: Build
+        if: ${{ inputs.run_build }}
+        run: ${{ inputs.build_command }}
+
+      - name: Validate migrations
+        if: ${{ inputs.run_migrations_check }}
+        run: ${{ inputs.migrations_check_command }}
